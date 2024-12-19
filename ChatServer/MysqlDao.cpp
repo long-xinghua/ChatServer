@@ -307,3 +307,43 @@ std::shared_ptr<UserInfo> MysqlDao::getUser(const int& uid) {
 		return nullptr;
 	}
 }
+
+std::shared_ptr<UserInfo> MysqlDao::getUser(const std::string& name) {
+	auto con = pool_->getConnection();
+
+	if (con == nullptr) {
+		std::cout << "cannot get a Mysql connection" << std::endl;
+		return nullptr;
+	}
+
+	Defer defer([this, &con]() {
+		pool_->returnConnection(std::move(con));
+		});
+
+	try {
+		// 准备查询语句
+		std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement("SELECT * FROM user WHERE name = ?"));
+		// 设置传入的参数
+		pstmt->setString(1, name);
+		// 执行查询
+		std::unique_ptr<sql::ResultSet> res(pstmt->executeQuery());
+
+		while (res->next()) {
+			std::shared_ptr<UserInfo> userInfo = std::make_shared<UserInfo>();	// 之前这个智能指针没有初始化就直接使用导致触发内存访问异常
+			userInfo->name = res->getString("name");
+			userInfo->email = res->getString("email");
+			userInfo->passwd = res->getString("passwd");
+			userInfo->uid = res->getInt("uid");
+			return userInfo;
+		}
+
+		return nullptr;	// 没找到用户信息返回空
+	}
+	catch (sql::SQLException& e) {
+		// pool_->returnConnection(std::move(con));
+		std::cerr << "SQLException: " << e.what();
+		std::cerr << " (MySQL error code: " << e.getErrorCode();
+		std::cerr << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+		return nullptr;
+	}
+}

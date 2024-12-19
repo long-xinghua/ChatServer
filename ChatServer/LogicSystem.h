@@ -27,13 +27,15 @@ private:
 	void registerCallBacks();		// 注册针对不同消息id的回调函数FunCallBack
 	void loginHandler(shared_ptr<CSession> session, const short& msg_id, const string& msg_data);			// 处理登录请求的回调
 	bool getBaseInfo(std::string base_key, int uid, std::shared_ptr<UserInfo>& user_info);					// 从redis或mysql中查询用户信息
-	//void searchInfo(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);
+	void searchInfo(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);		// 处理查找用户请求的回调
+	bool isPureDigit(const std::string& str);																// 判断一个字符串是否为纯数字
+	void getUserByUid(std::string uid_str, Json::Value& rtvalue);											// 通过uid查找用户
+	void getUserByName(std::string name, Json::Value& rtvalue);												// 通过昵称查找用户
 	/*void AddFriendApply(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);
 	void AuthFriendApply(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);
 	void DealChatTextMsg(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);
-	bool isPureDigit(const std::string& str);
-	void GetUserByUid(std::string uid_str, Json::Value& rtvalue);
-	void GetUserByName(std::string name, Json::Value& rtvalue);
+	
+	
 	bool GetBaseInfo(std::string base_key, int uid, std::shared_ptr<UserInfo>& userinfo);
 	bool GetFriendApplyInfo(int to_uid, std::vector<std::shared_ptr<ApplyInfo>>& list);
 	bool GetFriendList(int self_id, std::vector<std::shared_ptr<UserInfo>>& user_list);*/

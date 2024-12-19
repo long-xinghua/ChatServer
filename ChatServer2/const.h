@@ -92,4 +92,5 @@ enum MSG_IDS {
 #define IPCOUNTPREFIX  "ipcount_"		// 用于查询服务器数量
 #define USER_BASE_INFO "ubaseinfo_"		// 用于查询用户信息
 #define LOGIN_COUNT  "logincount"		// 用于查询ChatServer的客户端连接数
+#define NAME_INFO  "nameinfo_"			// 用于通过名字查询用户信息
 

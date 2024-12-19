@@ -13,6 +13,7 @@ public:
     bool updatePasswd(const std::string& name, const std::string& email); // 更新用户密码
     bool checkPasswd(const std::string& email, const std::string& passwd, UserInfo& userInfo); // 登录时检查email和passwd是否对应
     std::shared_ptr<UserInfo> getUser(const int& uid);                                         // 通过uid获取用户信息
+    std::shared_ptr<UserInfo> getUser(const std::string& name);                                         // 通过昵称获取用户信息
 private:
     MysqlMgr();
     MysqlDao  _dao;

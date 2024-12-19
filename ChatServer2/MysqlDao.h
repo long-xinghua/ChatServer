@@ -9,6 +9,7 @@
 #include <jdbc/cppconn/resultset.h>
 #include <jdbc/cppconn/statement.h>
 #include <jdbc/cppconn/exception.h>
+
 #include "data.h"
 
 class SqlConnection {
@@ -58,6 +59,7 @@ public:
 	bool updatePasswd(const std::string& name, const std::string& newPasswd);
 	bool checkPasswd(const std::string& email, const std::string& passwd, UserInfo& userInfo);
 	std::shared_ptr<UserInfo> getUser(const int& uid);
+	std::shared_ptr<UserInfo> getUser(const std::string& name);
 private:
 	std::unique_ptr<MysqlPool> pool_;
 };
