@@ -4,7 +4,7 @@
 #include "const.h"
 #include "RedisMgr.h"
 #include "UserMgr.h"
-//#include "ChatGrpcClient.h"
+#include "ChatGrpcClient.h"
 
 using namespace std;
 
@@ -83,10 +83,10 @@ void LogicSystem::registerCallBacks() {
 	_fun_callbacks[ID_SEARCH_USER_REQ] = std::bind(&LogicSystem::searchInfo, this,
 		placeholders::_1, placeholders::_2, placeholders::_3);
 
-	/*_fun_callbacks[ID_ADD_FRIEND_REQ] = std::bind(&LogicSystem::AddFriendApply, this,
+	_fun_callbacks[ID_ADD_FRIEND_REQ] = std::bind(&LogicSystem::addFriendApply, this,
 		placeholders::_1, placeholders::_2, placeholders::_3);
 
-	_fun_callbacks[ID_AUTH_FRIEND_REQ] = std::bind(&LogicSystem::AuthFriendApply, this,
+	/*_fun_callbacks[ID_AUTH_FRIEND_REQ] = std::bind(&LogicSystem::AuthFriendApply, this,
 		placeholders::_1, placeholders::_2, placeholders::_3);
 
 	_fun_callbacks[ID_TEXT_CHAT_MSG_REQ] = std::bind(&LogicSystem::DealChatTextMsg, this,
@@ -191,7 +191,7 @@ bool LogicSystem::getBaseInfo(std::string base_key, int uid, std::shared_ptr<Use
 		auto desc = root["desc"].asString();
 		auto sex = root["sex"].asInt();
 		auto icon = root["icon"].asString();
-		std::cout << "login user uid is  " << uid << ", name  is "
+		std::cout << "searching user uid is  " << uid << ", name  is "
 			<< name << ", passwd is " << passwd << ", email is " << email << endl;
 		
 		userInfo->uid = uid;
@@ -361,5 +361,81 @@ void LogicSystem::getUserByName(std::string name, Json::Value& rtvalue) {
 	rtvalue["icon"] = userInfo->icon;
 
 	RedisMgr::getInstance()->set(base_key, rtvalue.toStyledString());
+}
+
+void  LogicSystem::addFriendApply(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
+	Json::Value rtvalue;
+	Json::Value root;
+	Json::Reader reader;
+	
+	rtvalue["error"] = ErrorCodes::Success;
+
+	Defer defer([this, &rtvalue, session](){
+		std::string rsp = rtvalue.toStyledString();
+		session->send(rsp, MSG_IDS::ID_ADD_FRIEND_RSP);
+		});
+
+	reader.parse(msg_data, root);
+	auto applyName = root["applyName"].asString();
+	auto from_uid = root["uid"].asInt();
+	auto to_uid = root["to_uid"].asInt();
+	auto remark = root["remark"].asString();
+
+	std::cout<<"user add friend, uid is " << from_uid << ", apply name is " << applyName 
+			 << ", to_uid is " << to_uid << ", remark is " << remark << std::endl;
+
+	bool success = MysqlMgr::getInstance()->addFriend(from_uid, to_uid);
+	if (!success) {
+		std::cout << "failed to add firend in mysql" << std::endl;
+		rtvalue["error"] = ErrorCodes::MysqlErr;
+	}
+
+	// 通过redis查找目标用户所在server的地址（如果他在线的话）
+	std::string to_str = std::to_string(to_uid);
+	std::string to_ip_key = USERIPPREFIX + to_str;
+	std::string ip_value = "";											// 存放目标用户所在服务器名称
+	// 查找目标用户所在服务器
+	bool b_ip = RedisMgr::getInstance()->get(to_ip_key, ip_value);
+	// 没有查到说明用户不在线
+	if(!b_ip) {
+		std::cout << "target user offline" << std::endl;
+		return;
+	}
+
+	// 查到了
+	if (ip_value == ConfigMgr::getInst()["SelfServer"]["Name"]) {	// 如果就在本服务器
+		// 通知对方该 好友申请 请求
+		std::cout << "target user in the same server" << std::endl;
+		Json::Value notice;
+		notice["error"] = ErrorCodes::Success;
+		notice["applyUid"] = from_uid;
+		notice["applyName"] = applyName;
+		notice["desc"] = "";
+		std::string return_str = notice.toStyledString();
+		// 返回给客户端？
+		session->send(return_str, ID_NOTIFY_ADD_FRIEND_REQ);
+	}
+	else {															// 不在本服务器
+		std::cout << "target user in server:" << ip_value << std::endl;
+		std::string uid_str = std::to_string(from_uid);
+		std::string base_key = USER_BASE_INFO + uid_str;
+		auto fromUserInfo = std::make_shared<UserInfo>();
+		bool b_info = this->getBaseInfo(base_key, from_uid, fromUserInfo);	// 查找本用户信息
+
+		// 向目标用户所在的服务器发送grpc请求
+		AddFriendReq add_req;
+		add_req.set_applyuid(from_uid);
+		add_req.set_touid(to_uid);
+		add_req.set_name(applyName);
+		add_req.set_desc("");
+		if (b_info) {	// 如果查找到本用户信息的话就把查到的信息也加上
+			add_req.set_icon(fromUserInfo->icon);
+			add_req.set_nick(fromUserInfo->nick);
+			add_req.set_sex(fromUserInfo->sex);
+		}
+		ChatGrpcClient::getInstance()->NotifyAddFriend(ip_value, add_req);
+
+	}
+	return;
 }
 

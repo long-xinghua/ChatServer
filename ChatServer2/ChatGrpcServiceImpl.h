@@ -29,6 +29,7 @@ class ChatGrpcServiceImpl final: public ChatService::Service	// final´ú±í²»ÔÊĞíÔ
 {
 public:
 	ChatGrpcServiceImpl();
+	// ÌáĞÑ±¾·şÎñÆ÷Ä¿±êÓÃ»§ ÓĞĞÂºÃÓÑÉêÇë
 	Status NotifyAddFriend(grpc::ServerContext* context, const AddFriendReq* request,
 		AddFriendRsp* reply) override;
 

@@ -31,8 +31,8 @@ private:
 	bool isPureDigit(const std::string& str);																// 判断一个字符串是否为纯数字
 	void getUserByUid(std::string uid_str, Json::Value& rtvalue);											// 通过uid查找用户
 	void getUserByName(std::string name, Json::Value& rtvalue);												// 通过昵称查找用户
-	/*void AddFriendApply(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);
-	void AuthFriendApply(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);
+	void addFriendApply(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);	// 申请好友请求的回调
+	/*void AuthFriendApply(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);
 	void DealChatTextMsg(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);
 	
 	

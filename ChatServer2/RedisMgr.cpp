@@ -27,7 +27,7 @@ bool RedisMgr::get(const std::string& key, std::string& value) {
     auto reply = (redisReply*)redisCommand(connect, "GET %s", key.c_str());    //redisCommand返回的是void*，给它转成redisReply*的类型
     if (reply == NULL) {
         std::cout << "[ GET  " << key << " ] failed" << std::endl;
-        freeReplyObject(reply);  //reply不要用了的时候一定要用freeReplyObject将其释放掉
+        //freeReplyObject(reply);  //reply不要用了的时候一定要用freeReplyObject将其释放掉
         return false;
     }
 
@@ -57,10 +57,10 @@ bool RedisMgr::set(const std::string& key, const std::string& value) {
     auto reply = (redisReply*)redisCommand(connect, "SET %s %s", key.c_str(), value.c_str());
 
     //如果返回NULL则说明执行失败
-    if (NULL == reply)
+    if (reply == nullptr)
     {
-        std::cout << "Execut command [ SET " << key << "  " << value << " ] failure ! " << std::endl;
-        freeReplyObject(reply);
+        std::cout << "Execut command [ SET " << key << "  " << value << " ] failed ! " << std::endl;
+        //freeReplyObject(reply);
         return false;
     }
 
@@ -110,10 +110,10 @@ bool RedisMgr::lPush(const std::string& key, const std::string& value)
         pool_->returnConnection(connect);
         });
     auto reply = (redisReply*)redisCommand(connect, "LPUSH %s %s", key.c_str(), value.c_str());
-    if (NULL == reply)
+    if (reply == nullptr)
     {
         std::cout << "Execut command [ LPUSH " << key << "  " << value << " ] failure ! " << std::endl;
-        freeReplyObject(reply);
+        //freeReplyObject(reply);
         return false;
     }
 
@@ -159,10 +159,10 @@ bool RedisMgr::rPush(const std::string& key, const std::string& value) {
         pool_->returnConnection(connect);
         });
     auto reply = (redisReply*)redisCommand(connect, "RPUSH %s %s", key.c_str(), value.c_str());
-    if (NULL == reply)
+    if (reply == nullptr)
     {
         std::cout << "Execut command [ RPUSH " << key << "  " << value << " ] failure ! " << std::endl;
-        freeReplyObject(reply);
+        //freeReplyObject(reply);
         return false;
     }
 

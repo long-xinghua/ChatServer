@@ -43,6 +43,8 @@ enum ErrorCodes {
 	PasswdInvalid = 1009,   //密码更新失败
 	TokenInvalid = 1010,   //Token失效
 	UidInvalid = 1011,  //uid无效
+	MysqlErr=1012,		// mysql出错
+	UserOffline=1013,   // 用户不在线
 };
 
 

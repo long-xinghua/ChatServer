@@ -60,6 +60,7 @@ public:
 	bool checkPasswd(const std::string& email, const std::string& passwd, UserInfo& userInfo);
 	std::shared_ptr<UserInfo> getUser(const int& uid);
 	std::shared_ptr<UserInfo> getUser(const std::string& name);
+	bool addFriend(const int& from_uid, const int& to_uid);
 private:
 	std::unique_ptr<MysqlPool> pool_;
 };

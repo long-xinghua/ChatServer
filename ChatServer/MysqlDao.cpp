@@ -347,3 +347,40 @@ std::shared_ptr<UserInfo> MysqlDao::getUser(const std::string& name) {
 		return nullptr;
 	}
 }
+
+bool MysqlDao::addFriend(const int& from_uid, const int& to_uid)
+{
+	auto con = pool_->getConnection();
+	if (con == nullptr) {
+		std::cout << "cannot get a Mysql connection" << std::endl;
+		return false;;
+	}
+
+	Defer defer([this, &con]() {
+		pool_->returnConnection(std::move(con));
+		});
+
+	try {
+		// 准备调用存储过程（即mysql里的函数）
+		std::unique_ptr<sql::PreparedStatement> stmt(con->_con->prepareStatement("INSERT INTO friend_apply (from_uid, to_uid) values (?,?) "
+		"ON DUPLICATE KEY UPDATE from_uid=from_uid, to_uid=to_uid"));
+		// 设置传入的两个参数
+		stmt->setInt(1, from_uid);
+		stmt->setInt(2, to_uid);
+		
+		int rowAffected = stmt->executeUpdate();
+		if (rowAffected < 0) {
+			std::cout << "mysql插入语句执行失败" << std::endl;
+			return false;
+		}
+		return true;
+	}
+	catch (sql::SQLException& e) {
+		pool_->returnConnection(std::move(con));
+		std::cerr << "SQLException: " << e.what();
+		std::cerr << " (MySQL error code: " << e.getErrorCode();
+		std::cerr << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+		return false;
+	}
+	return true;
+}

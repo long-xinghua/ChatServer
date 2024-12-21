@@ -80,8 +80,31 @@ ChatGrpcClient::~ChatGrpcClient() {
 
 AddFriendRsp ChatGrpcClient::NotifyAddFriend(std::string server_ip, const AddFriendReq& req) {
 	AddFriendRsp rsp;
+	rsp.set_error(ErrorCodes::Success);
+	Defer defer([&rsp, &req]() {
+		rsp.set_applyuid(req.applyuid());
+		rsp.set_touid(req.touid());
+		});
+	// 从和其他ChatServer的连接中找目标服务器
+	auto find_iter = _pools.find(server_ip);
+	if (find_iter == _pools.end()) {
+		rsp.set_error(ErrorCodes::RPCFailed);
+		return rsp;
+	}
+	// 拿到连接目标服务器的连接池
+	auto& pool = find_iter->second;
+	auto stub = pool->getConnection();
+	Defer deferCon([this, &pool, &stub]() {
+		pool->returnConnection(std::move(stub));
+		});
+	ClientContext context;					// 没太懂这个context
+	Status status = stub->NotifyAddFriend(&context, req, &rsp);
+	if (!status.ok()) {
+		rsp.set_error(ErrorCodes::RPCFailed);
+		return rsp;
+	}
+	std::cout << "succeed to send NotifyAddFriend to target server:" << server_ip << std::endl;
 	return rsp;
-	//todo...
 }
 
 AuthFriendRsp ChatGrpcClient::NotifyAuthFriend(std::string server_ip, const AuthFriendReq& req) {
