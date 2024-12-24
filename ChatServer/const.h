@@ -92,7 +92,7 @@ enum MSG_IDS {
 #define USERIPPREFIX  "uip_"			// 用于查询user所在的ChatServer服务器
 #define USERTOKENPREFIX  "utoken_"		// 用于获取user的token和uid(uid是键，token是值)
 #define IPCOUNTPREFIX  "ipcount_"		// 用于查询服务器数量
-#define USER_BASE_INFO "ubaseinfo_"		// 用于查询用户信息
+#define USER_BASE_INFO "ubaseinfo_"		// 用于通过uid查询用户信息
 #define LOGIN_COUNT  "logincount"		// 用于查询ChatServer的客户端连接数
 #define NAME_INFO  "nameinfo_"			// 用于通过名字查询用户信息
 

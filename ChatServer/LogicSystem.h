@@ -32,13 +32,7 @@ private:
 	void getUserByUid(std::string uid_str, Json::Value& rtvalue);											// 通过uid查找用户
 	void getUserByName(std::string name, Json::Value& rtvalue);												// 通过昵称查找用户
 	void addFriendApply(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);	// 申请好友请求的回调
-	/*void AuthFriendApply(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);
-	void DealChatTextMsg(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);
-	
-	
-	bool GetBaseInfo(std::string base_key, int uid, std::shared_ptr<UserInfo>& userinfo);
-	bool GetFriendApplyInfo(int to_uid, std::vector<std::shared_ptr<ApplyInfo>>& list);
-	bool GetFriendList(int self_id, std::vector<std::shared_ptr<UserInfo>>& user_list);*/
+	bool getFriendApplyInfo(int to_uid, std::vector<std::shared_ptr<ApplyInfo>>& applyList);					// 获取用户收到的好友申请列表
 	std::thread _worker_thread;
 	std::queue<shared_ptr<LogicNode>> _msg_que;
 	std::mutex _mutex;

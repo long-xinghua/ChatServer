@@ -146,7 +146,21 @@ void LogicSystem::loginHandler(shared_ptr<CSession> session, const short& msg_id
 	// defer会自动发送给客户端的回包，在这无需手动发送
 
 	// 从数据库获取好友申请列表
-
+	std::vector<std::shared_ptr<ApplyInfo>> applyList;
+	auto b_apply = getFriendApplyInfo(uid, applyList);
+	if (b_apply) {
+		for (auto apply : applyList) {
+			Json::Value obj;
+			obj["name"] = apply->_name;
+			obj["uid"] = apply->_uid;
+			obj["status"] = apply->_status;
+			obj["sex"] = apply->_sex;
+			obj["desc"] = apply->_desc;
+			obj["nick"] = apply->_nick;
+			// 将申请信息添加到回复的json中
+			rtvalue["apply_list"].append(obj);
+		}
+	}
 	// 从数据库获取好友列表
 
 	auto serverName = ConfigMgr::getInst()["SelfServer"]["Name"];
@@ -437,5 +451,11 @@ void  LogicSystem::addFriendApply(std::shared_ptr<CSession> session, const short
 
 	}
 	return;
+}
+
+bool LogicSystem::getFriendApplyInfo(int to_uid, std::vector<std::shared_ptr<ApplyInfo>>& applyList)
+{
+	// 从Mysql获取好友申请列表
+	return MysqlMgr::getInstance()->getApplyList(to_uid, applyList, 0, 10);
 }
 

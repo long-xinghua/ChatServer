@@ -61,6 +61,7 @@ public:
 	std::shared_ptr<UserInfo> getUser(const int& uid);
 	std::shared_ptr<UserInfo> getUser(const std::string& name);
 	bool addFriend(const int& from_uid, const int& to_uid);
+	bool getApplyList(int to_uid, std::vector<std::shared_ptr<ApplyInfo>>& applyList, int begin, int limit = 10);   // 获取用户收到的好友申请列表
 private:
 	std::unique_ptr<MysqlPool> pool_;
 };

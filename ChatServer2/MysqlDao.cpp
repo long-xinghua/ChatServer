@@ -384,3 +384,47 @@ bool MysqlDao::addFriend(const int& from_uid, const int& to_uid)
 	}
 	return true;
 }
+
+bool MysqlDao::getApplyList(int to_uid, std::vector<std::shared_ptr<ApplyInfo>>& applyList, int begin, int limit)
+{
+	auto con = pool_->getConnection();
+	if (con == nullptr) {
+		std::cout << "cannot get a Mysql connection" << std::endl;
+		return false;;
+	}
+
+	Defer defer([this, &con]() {
+		pool_->returnConnection(std::move(con));
+		});
+
+	try {
+		// 准备调用存储过程（即mysql里的函数）
+		std::unique_ptr<sql::PreparedStatement> stmt(con->_con->prepareStatement("SELECT apply.from_uid, apply.status, user.name FROM friend_apply AS apply JOIN user "
+																				 " ON apply.from_uid = user.uid WHERE apply.to_uid = ? AND apply.id > ? ORDER BY apply.id ASC LIMIT ?"));
+		// 设置传入的两个参数
+		stmt->setInt(1, to_uid);
+		stmt->setInt(2, begin);
+		stmt->setInt(3, limit);
+
+		// 执行查询
+		std::unique_ptr<sql::ResultSet> res(stmt->executeQuery());
+		// 将查询到的每一条结果都放入applyList
+		while (res->next()) {
+			auto name = res->getString("name");
+			int from_uid = res->getInt("from_uid");
+			auto status = res->getInt("status");
+			auto apply = std::make_shared<ApplyInfo>(from_uid, name, "", "", "", 0, status);
+
+			applyList.push_back(apply);
+		}
+		return true;
+	}
+	catch (sql::SQLException& e) {
+		pool_->returnConnection(std::move(con));
+		std::cerr << "SQLException: " << e.what();
+		std::cerr << " (MySQL error code: " << e.getErrorCode();
+		std::cerr << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+		return false;
+	}
+	return true;
+}
