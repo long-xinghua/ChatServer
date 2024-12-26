@@ -14,8 +14,11 @@ public:
     bool checkPasswd(const std::string& email, const std::string& passwd, UserInfo& userInfo);  // 登录时检查email和passwd是否对应
     std::shared_ptr<UserInfo> getUser(const int& uid);                                          // 通过uid获取用户信息
     std::shared_ptr<UserInfo> getUser(const std::string& name);                                 // 通过昵称获取用户信息
-    bool addFriend(const int& from_uid, const int& to_uid);                                     // 添加好友请求，在数据库里保存添加信息
+    bool addFriendApply(const int& from_uid, const int& to_uid);                                // 添加好友请求，在数据库里保存添加信息
     bool getApplyList(int to_uid, std::vector<std::shared_ptr<ApplyInfo>>& applyList, int begin, int limit = 10);   // 获取用户收到的好友申请列表
+    bool authFriendApply(const int& from, const int& to);                                       // 认证好友，将friend_apply表中的status字段置为1
+    bool addFriend(const int& from, const int& to, std::string back_name);                      // 将用户添加到friend表中
+    bool getFriendList(int uid, std::vector<std::shared_ptr<UserInfo>>& friendList);            // 获取用户的好友列表
 private:
     MysqlMgr();
     MysqlDao  _dao;

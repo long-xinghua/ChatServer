@@ -60,8 +60,11 @@ public:
 	bool checkPasswd(const std::string& email, const std::string& passwd, UserInfo& userInfo);
 	std::shared_ptr<UserInfo> getUser(const int& uid);
 	std::shared_ptr<UserInfo> getUser(const std::string& name);
-	bool addFriend(const int& from_uid, const int& to_uid);
+	bool addFriendApply(const int& from_uid, const int& to_uid);
 	bool getApplyList(int to_uid, std::vector<std::shared_ptr<ApplyInfo>>& applyList, int begin, int limit = 10);   // 获取用户收到的好友申请列表
+	bool authFriendApply(const int& from, const int& to);                                  
+	bool addFriend(const int& from, const int& to, std::string back_name);
+	bool getFriendList(int uid, std::vector<std::shared_ptr<UserInfo>>& friendList);
 private:
 	std::unique_ptr<MysqlPool> pool_;
 };
