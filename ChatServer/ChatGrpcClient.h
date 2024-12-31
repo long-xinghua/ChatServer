@@ -37,6 +37,8 @@ using message::LoginRsp;
 using message::LoginReq;
 using message::ChatService;
 
+using message::TextChatData;
+
 
 // 用连接池存储多个连接
 class ChatConPool {

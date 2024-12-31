@@ -85,8 +85,36 @@ Status ChatGrpcServiceImpl::NotifyAuthFriend(::grpc::ServerContext* context, con
 	return Status::OK;
 }
 
-Status ChatGrpcServiceImpl::NotifyTextChatMsg(::grpc::ServerContext* context, const TextChatMsgReq* request, TextChatMsgRsp* response) {
-	//todo...
+Status ChatGrpcServiceImpl::NotifyTextChatMsg(::grpc::ServerContext* context, const TextChatMsgReq* request, TextChatMsgRsp* reply) {
+	//查找用户是否在本服务器
+	auto touid = request->touid();
+	auto session = UserMgr::getInstance()->getSession(touid);
+	reply->set_error(ErrorCodes::Success);
+
+	//用户不在内存中则直接返回
+	if (session == nullptr) {
+		return Status::OK;
+	}
+
+	//在内存中则直接发送通知对方
+	Json::Value  rtvalue;
+	rtvalue["error"] = ErrorCodes::Success;
+	rtvalue["from_uid"] = request->fromuid();
+	rtvalue["to_uid"] = request->touid();
+
+	//将聊天数据组织为数组
+	Json::Value text_array;
+	for (auto& msg : request->textmsgs()) {
+		Json::Value element;
+		element["content"] = msg.msgcontent();
+		element["msgid"] = msg.msgid();
+		text_array.append(element);
+	}
+	rtvalue["text_array"] = text_array;
+
+	std::string return_str = rtvalue.toStyledString();
+
+	session->send(return_str, ID_NOTIFY_TEXT_CHAT_MSG_REQ);
 	return Status::OK;
 }
 

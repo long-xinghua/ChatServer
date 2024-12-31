@@ -29,6 +29,7 @@ private:
 	void searchInfo(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);		// 处理查找用户请求的回调
 	void addFriendApply(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);	// 申请好友请求的回调
 	void authFriendApply(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);	// 认证好友请求的回调
+	void dealChatTextMsg(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);	// 发送消息请求的回调
 	bool getBaseInfo(std::string base_key, int uid, std::shared_ptr<UserInfo>& user_info);					// 从redis或mysql中查询用户信息
 	bool isPureDigit(const std::string& str);																// 判断一个字符串是否为纯数字
 	void getUserByUid(std::string uid_str, Json::Value& rtvalue);											// 通过uid查找用户

@@ -82,15 +82,15 @@ void LogicSystem::registerCallBacks() {
 	// 消息类型为查找用户
 	_fun_callbacks[ID_SEARCH_USER_REQ] = std::bind(&LogicSystem::searchInfo, this,
 		placeholders::_1, placeholders::_2, placeholders::_3);
-
+	// 添加好友请求
 	_fun_callbacks[ID_ADD_FRIEND_REQ] = std::bind(&LogicSystem::addFriendApply, this,
 		placeholders::_1, placeholders::_2, placeholders::_3);
-
+	// 认证好友请求
 	_fun_callbacks[ID_AUTH_FRIEND_REQ] = std::bind(&LogicSystem::authFriendApply, this,
 		placeholders::_1, placeholders::_2, placeholders::_3);
-
-	/*_fun_callbacks[ID_TEXT_CHAT_MSG_REQ] = std::bind(&LogicSystem::DealChatTextMsg, this,
-		placeholders::_1, placeholders::_2, placeholders::_3);*/
+	// 发送消息请求
+	_fun_callbacks[ID_TEXT_CHAT_MSG_REQ] = std::bind(&LogicSystem::dealChatTextMsg, this,
+		placeholders::_1, placeholders::_2, placeholders::_3);
 
 }
 
@@ -565,6 +565,73 @@ void LogicSystem::authFriendApply(std::shared_ptr<CSession> session, const short
 
 	//发送通知
 	ChatGrpcClient::getInstance()->NotifyAuthFriend(to_ip_value, auth_req);
+}
+
+void LogicSystem::dealChatTextMsg(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data)
+{
+	Json::Value root;
+	Json::Reader reader;
+	bool b_read = reader.parse(msg_data, root);
+	if (!b_read) {
+		return;
+	}
+
+	auto from_uid = root["from_uid"].asInt();
+	auto to_uid = root["to_uid"].asInt();
+	const Json::Value textArray = root["text_array"];
+
+	Json::Value rtvalue;
+	rtvalue["error"] = ErrorCodes::Success;
+	rtvalue["text_array"] = textArray;
+	rtvalue["from_uid"] = from_uid;
+	rtvalue["to_uid"] = to_uid;
+
+	Defer defer([&rtvalue, session]() {
+		std::string return_str = rtvalue.toStyledString();
+		session->send(return_str, ID_TEXT_CHAT_MSG_RSP);			// 给客户端返回发送消息应答
+		});
+
+	// 通过redis查找目标用户所在server的地址（如果他在线的话）
+	std::string to_str = std::to_string(to_uid);
+	std::string to_ip_key = USERIPPREFIX + to_str;
+	std::string ip_value = "";											// 存放目标用户所在服务器名称
+	// 查找目标用户所在服务器
+	bool b_ip = RedisMgr::getInstance()->get(to_ip_key, ip_value);
+	// 没有查到说明用户不在线
+	if (!b_ip) {
+		std::cout << "target user offline" << std::endl;
+		return;
+	}
+
+	// 查到了
+	if (ip_value == ConfigMgr::getInst()["SelfServer"]["Name"]) {	// 如果就在本服务器
+		auto friendSession = UserMgr::getInstance()->getSession(to_uid);
+		if (friendSession == nullptr) {
+			return;
+		}
+		// 将消息发送给对方
+		std::string return_str = rtvalue.toStyledString();
+		friendSession->send(return_str, ID_NOTIFY_TEXT_CHAT_MSG_REQ);	// 消息类型为提醒收到消息
+	}
+	else {															// 不在本服务器
+		std::cout << "target user in server:" << ip_value << std::endl;
+
+		// 向目标用户所在的服务器发送grpc请求
+		TextChatMsgReq text_msg_req;
+		text_msg_req.set_fromuid(from_uid);
+		text_msg_req.set_touid(to_uid);
+		for (const auto& text_obj : textArray) {
+			auto content = text_obj["content"].asString();
+			auto msgid = text_obj["msgid"].asString();
+			std::cout << "message id is: " << msgid << ", content is: " << content << std::endl;
+			auto* text_msg = text_msg_req.add_textmsgs();
+			text_msg->set_msgid(msgid);
+			text_msg->set_msgcontent(content);
+		}
+		
+		ChatGrpcClient::getInstance()->NotifyTextChatMsg(ip_value, text_msg_req, rtvalue);
+	}
+	return;
 }
 
 bool LogicSystem::getFriendApplyInfo(int to_uid, std::vector<std::shared_ptr<ApplyInfo>>& applyList)
